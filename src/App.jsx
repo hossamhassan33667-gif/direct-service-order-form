@@ -313,12 +313,12 @@ function MainApp() {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
       <header className="bg-white border-b border-gray-200">
-        <div className="w-full mx-auto px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <img src="./logo.png" alt="شعار شركة دايركت سيرفس" className="h-12 w-auto shrink-0 object-contain" />
+        <div className="w-full mx-auto px-3 sm:px-4 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-2 sm:gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
+            <img src="./logo.png" alt="شعار شركة دايركت سيرفس" className="h-10 sm:h-12 w-auto shrink-0 object-contain" />
             <div>
-              <h1 className="text-xl font-bold">شركة دايركت سيرفس — نموذج طلب بضائع</h1>
-              <p className="text-sm text-gray-500">{catalogStatus} · اختَر الأصناف وأدخل الكميات ثم صدِّر الطلب إلى Excel</p>
+              <h1 className="text-base sm:text-xl font-bold">شركة دايركت سيرفس — نموذج طلب بضائع</h1>
+              <p className="text-xs sm:text-sm text-gray-500">{catalogStatus} · اختَر الأصناف وأدخل الكميات ثم صدِّر الطلب إلى Excel</p>
             </div>
           </div>
           <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -327,8 +327,8 @@ function MainApp() {
         </div>
       </header>
 
-      <main className="w-full px-4 lg:px-8 py-6 grid md:grid-cols-3 gap-6">
-        <section className="md:col-span-2 space-y-4">
+      <main className="w-full min-w-0 px-3 sm:px-4 lg:px-8 py-4 sm:py-6 grid md:grid-cols-3 gap-4 sm:gap-6">
+        <section className="md:col-span-2 order-2 md:order-none min-w-0 space-y-4">
           <div className="grid md:grid-cols-3 gap-3">
             <div>
               <label className="block text-sm mb-1">بحث حسب الاسم، الكود أو الفئة</label>
@@ -346,7 +346,7 @@ function MainApp() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+          <div className="grid md:grid-cols-3 gap-3 bg-white p-3 sm:p-4 rounded-2xl shadow-sm border border-gray-200">
             <div><label className="block text-sm mb-1">اسم العميل / المؤسسة</label><input value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
             <div><label className="block text-sm mb-1">رقم الجوال</label><input value={client.phone} onChange={(e) => setClient({ ...client, phone: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
             <div><label className="block text-sm mb-1">الفرع</label><input value={client.branch} onChange={(e) => setClient({ ...client, branch: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
@@ -354,19 +354,43 @@ function MainApp() {
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between"><h2 className="font-semibold">الأصناف ({filtered.length})</h2><p className="text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p></div>
-            <div className="overflow-auto max-h-[60vh]"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr>
+            <div className="px-3 sm:px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-1"><h2 className="font-semibold">الأصناف ({filtered.length})</h2><p className="text-xs sm:text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p></div>
+            <div className="hidden md:block overflow-auto max-h-[60vh]"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr>
               <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
             </tr></thead><tbody>
               {filtered.map((it) => { const key = getKey(it); const current = cart[key]?.qty || ""; return (
                 <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
               );})}
             </tbody></table></div>
+
+            <div className="md:hidden max-h-[65vh] overflow-y-auto divide-y divide-gray-200">
+              {filtered.map((it) => {
+                const key = getKey(it);
+                const current = cart[key]?.qty || "";
+                return (
+                  <article key={key} className="p-3 space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-xs text-gray-500" dir="ltr">{it.code}</p>
+                        <p className="font-medium leading-6 break-words">{it.name}</p>
+                      </div>
+                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">{it.category}</span>
+                    </div>
+                    <div className="flex items-end justify-between gap-3">
+                      <p className="text-sm text-gray-600">الوحدة: {it.unit || "—"}</p>
+                      <label className="w-28 shrink-0 text-xs text-gray-600">الكمية
+                        <input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="mt-1 w-full rounded-lg border border-gray-200 px-2 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" />
+                      </label>
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
           </div>
         </section>
 
-        <aside className="space-y-4">
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+        <aside className="order-1 md:order-none space-y-4">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
             <h3 className="font-semibold text-center mb-4">ملخص الطلب</h3>
             <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">عدد الأصناف</span><span className="font-semibold">{totalLines}</span></div>
             <div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div>
@@ -377,10 +401,21 @@ function MainApp() {
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200"><h4 className="font-semibold">الأصناف المختارة</h4><span className="text-xs text-gray-500">يمكن تعديل الكميات من الجدول</span></div>
-            <div className="max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
+            <div className="hidden md:block max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
               {Object.values(cart).length === 0 && <tr><td className="p-4 text-center text-gray-500" colSpan={4}>لا توجد أصناف مختارة حتى الآن</td></tr>}
               {Object.values(cart).map((x, idx) => <tr key={idx} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{x.qty}</td><td className="p-2 whitespace-nowrap">{x.unit}</td><td className="p-2">{x.name}</td><td className="p-2 whitespace-nowrap">{x.code}</td></tr>)}
             </tbody></table></div>
+            <div className="md:hidden max-h-[40vh] overflow-y-auto divide-y divide-gray-200">
+              {Object.values(cart).length === 0 && <p className="p-4 text-center text-sm text-gray-500">لا توجد أصناف مختارة حتى الآن</p>}
+              {Object.values(cart).map((x, idx) => (
+                <div key={idx} className="p-3 space-y-1">
+                  <p className="font-medium break-words">{x.name}</p>
+                  <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-gray-600">
+                    <span dir="ltr">{x.code}</span><span>الكمية: {x.qty} {x.unit}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </aside>
       </main>
