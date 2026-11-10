@@ -213,7 +213,6 @@ function MainApp() {
         [],
         ["إجمالي الأصناف", cartRows.length],
         ["إجمالي الكميات", cartRows.reduce((a, r) => a + r[6], 0)],
-        ["إجمالي المبلغ", Object.values(cart).reduce((a, x) => a + (Number(x.price) || 0) * (Number(x.qty) || 0), 0)],
       ];
 
       const rows = [...header, ...tableHeader, ...cartRows, ...footer];
