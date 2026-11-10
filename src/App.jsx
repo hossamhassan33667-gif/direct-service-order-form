@@ -171,7 +171,10 @@ function MainApp() {
     return ["all", ...Array.from(set)];
   }, [items]);
 
-  const brands = useMemo(() => ["all", ...Array.from(new Set(items.map((x) => x.brand || "غير محدد")))], [items]);
+  const brands = useMemo(() => {
+    const categoryItems = category === "all" ? items : items.filter((x) => x.category === category);
+    return ["all", ...Array.from(new Set(categoryItems.map((x) => x.brand || "غير محدد")))];
+  }, [items, category]);
 
   const filtered = useMemo(() => filterItems(items, search, category, brand), [items, category, search, brand]);
 
@@ -340,7 +343,7 @@ function MainApp() {
             </div>
             <div>
               <label className="block text-sm mb-1">الفئة</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+              <select value={category} onChange={(e) => { setCategory(e.target.value); setBrand("all"); }} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {categories.map((c) => <option key={c} value={c}>{c === "all" ? "كل الفئات" : c}</option>)}
               </select>
             </div>
