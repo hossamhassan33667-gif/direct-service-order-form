@@ -195,8 +195,6 @@ function MainApp() {
         x.unit,
         x.brand || "",
         Number(x.qty) || 0,
-        Number(x.price) || 0,
-        (Number(x.price) || 0) * (Number(x.qty) || 0),
       ]);
 
       const header = [
@@ -210,12 +208,12 @@ function MainApp() {
         [],
       ];
 
-      const tableHeader = [["#", "كود الصنف", "اسم الصنف", "الفئة", "الوحدة", "العلامة", "الكمية", "السعر", "الإجمالي"]];
+      const tableHeader = [["#", "كود الصنف", "اسم الصنف", "الفئة", "الوحدة", "العلامة", "الكمية"]];
       const footer = [
         [],
         ["إجمالي الأصناف", cartRows.length],
         ["إجمالي الكميات", cartRows.reduce((a, r) => a + r[6], 0)],
-        ["إجمالي المبلغ", cartRows.reduce((a, r) => a + r[8], 0)],
+        ["إجمالي المبلغ", Object.values(cart).reduce((a, x) => a + (Number(x.price) || 0) * (Number(x.qty) || 0), 0)],
       ];
 
       const rows = [...header, ...tableHeader, ...cartRows, ...footer];
@@ -230,23 +228,17 @@ function MainApp() {
         { wch: 10 }, // unit
         { wch: 14 }, // brand
         { wch: 10 }, // qty
-        { wch: 12 }, // price
-        { wch: 14 }, // amount
       ];
 
       // Add AutoFilter on the table range (header row + data rows)
       const startRow = header.length + 1; // table header row index (1-based)
       const endRow = startRow + cartRows.length; // last data row index
-      ws['!autofilter'] = { ref: `A${startRow}:I${endRow}` };
+      ws['!autofilter'] = { ref: `A${startRow}:G${endRow}` };
 
-      // Number formats for qty/price/amount
+      // Number format for quantity
       for (let r = startRow + 1; r <= endRow; r++) { // data rows only
         const qtyCell = `G${r}`;
-        const priceCell = `H${r}`;
-        const amtCell = `I${r}`;
         if (ws[qtyCell]) ws[qtyCell].t = 'n';
-        if (ws[priceCell]) { ws[priceCell].t = 'n'; ws[priceCell].z = '#,##0.00'; }
-        if (ws[amtCell]) { ws[amtCell].t = 'n'; ws[amtCell].z = '#,##0.00'; }
       }
 
       const wb = XLSX.utils.book_new();
