@@ -61,15 +61,16 @@ const updateCart = (prevCart, item, qtyVal) => {
 };
 
 // Extracted for testability: same logic used by the UI filter
-const filterItems = (items, search, category) => {
+const filterItems = (items, search, category, brand = "all") => {
   const s = (search || "").trim().toLowerCase();
   return (items || []).filter((x) => {
     const okCat = category === "all" || x.category === category;
+    const okBrand = brand === "all" || (x.brand || "غير محدد") === brand;
     const codeStr = (x.code ?? "").toString().toLowerCase();
     const nameStr = (x.name ?? "").toString().toLowerCase();
     const brandStr = (x.brand ?? "").toString().toLowerCase();
     const okSearch = !s || codeStr.includes(s) || nameStr.includes(s) || brandStr.includes(s);
-    return okCat && okSearch;
+    return okCat && okBrand && okSearch;
   });
 };
 
@@ -80,6 +81,7 @@ function MainApp() {
   );
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("all");
+  const [brand, setBrand] = useState("all");
   const [cart, setCart] = useState({});
   const [client, setClient] = useState({ name: "", phone: "", branch: "" });
   const [notes, setNotes] = useState("");
@@ -169,7 +171,9 @@ function MainApp() {
     return ["all", ...Array.from(set)];
   }, [items]);
 
-  const filtered = useMemo(() => filterItems(items, search, category), [items, category, search]);
+  const brands = useMemo(() => ["all", ...Array.from(new Set(items.map((x) => x.brand || "غير محدد")))], [items]);
+
+  const filtered = useMemo(() => filterItems(items, search, category, brand), [items, category, search, brand]);
 
   // --- Cart operations ---
   const setQty = (item, q) => setCart((p) => updateCart(p, item, q));
@@ -329,7 +333,7 @@ function MainApp() {
 
       <main className="w-full min-w-0 px-3 sm:px-4 lg:px-8 py-4 sm:py-6 grid md:grid-cols-3 gap-4 sm:gap-6">
         <section className="md:col-span-2 order-2 md:order-none min-w-0 space-y-4">
-          <div className="grid md:grid-cols-3 gap-3">
+          <div className="grid md:grid-cols-4 gap-3">
             <div>
               <label className="block text-sm mb-1">بحث حسب الاسم، الكود أو الفئة</label>
               <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="اكتب كلمة البحث هنا" className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200" />
@@ -338,6 +342,12 @@ function MainApp() {
               <label className="block text-sm mb-1">الفئة</label>
               <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
                 {categories.map((c) => <option key={c} value={c}>{c === "all" ? "كل الفئات" : c}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm mb-1">البراند</label>
+              <select value={brand} onChange={(e) => setBrand(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                {brands.map((b) => <option key={b} value={b}>{b === "all" ? "كل البراندات" : b}</option>)}
               </select>
             </div>
             <div>
