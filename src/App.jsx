@@ -302,10 +302,23 @@ function MainApp() {
   }, [items]);
 
   // --- Full "واجهة الطلب" UI ---
+  const whatsappText = [
+    "طلب بضائع - شركة دايركت سيرفس",
+    "رقم الطلب: " + orderNo,
+    client.name && "العميل/المؤسسة: " + client.name,
+    client.phone && "الجوال: " + client.phone,
+    client.branch && "الفرع: " + client.branch,
+    "",
+    ...Object.values(cart).map((x) => "• " + x.code + " - " + x.name + " | " + x.unit + " | الكمية: " + x.qty),
+    "",
+    "إجمالي الكميات: " + totalQty,
+    notes && "ملاحظات: " + notes,
+  ].filter(Boolean).join("\n");
+
   return (
     <div className="min-h-screen bg-gray-50 text-gray-900">
-      <header className="sticky top-0 z-10 backdrop-blur bg-white/70 border-b">
-        <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <header className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="size-9 rounded-2xl bg-yellow-400" />
             <div>
@@ -313,177 +326,66 @@ function MainApp() {
               <p className="text-sm text-gray-500">{catalogStatus} · اختَر الأصناف وأدخل الكميات ثم صدِّر الطلب إلى Excel</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <button onClick={loadSample} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm">تحميل مثال</button>
-            <button onClick={refreshCatalog} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-sm">تحديث الأصناف</button>
-            <label className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-sm cursor-pointer">
-              استيراد أصناف (Excel/CSV)
-              <input ref={fileRef} onChange={onUpload} type="file" accept=".xlsx,.xls,.csv" className="hidden" />
-            </label>
-            <button onClick={exportExcel} className="px-3 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white text-sm">تصدير الطلبية إلى Excel</button>
+          <div className="flex items-center gap-2 text-sm text-gray-500">
+            <button onClick={refreshCatalog} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700">تحديث الأصناف</button>
           </div>
         </div>
       </header>
 
       <main className="max-w-6xl mx-auto px-4 py-6 grid md:grid-cols-3 gap-6">
-        {/* Left: Filters & Items */}
         <section className="md:col-span-2 space-y-4">
-          <div className="grid md:grid-cols-4 gap-3">
-            <div className="md:col-span-2">
-              <label className="block text-sm mb-1">بحث</label>
-              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="كود، اسم، ماركة" className="w-full px-3 py-2 rounded-xl border focus:outline-none focus:ring" />
+          <div className="grid md:grid-cols-3 gap-3">
+            <div>
+              <label className="block text-sm mb-1">بحث حسب الاسم، الكود أو الفئة</label>
+              <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="اكتب كلمة البحث هنا" className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200" />
             </div>
             <div>
               <label className="block text-sm mb-1">الفئة</label>
-              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 rounded-xl border focus:outline-none focus:ring">
-                {categories.map((c) => (
-                  <option key={c} value={c}>{c === "all" ? "كل الفئات" : c}</option>
-                ))}
+              <select value={category} onChange={(e) => setCategory(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200">
+                {categories.map((c) => <option key={c} value={c}>{c === "all" ? "كل الفئات" : c}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm mb-1">رقم الطلب</label>
-              <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)} className="w-full px-3 py-2 rounded-xl border" />
+              <input value={orderNo} onChange={(e) => setOrderNo(e.target.value)} className="w-full px-3 py-2 rounded-xl border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-blue-200" />
             </div>
           </div>
 
-          {/* Client box */}
-          <div className="grid md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl shadow-sm border">
-            <div>
-              <label className="block text-sm mb-1">اسم العميل / الفرع</label>
-              <input value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} className="w-full px-3 py-2 rounded-xl border" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">رقم الجوال</label>
-              <input value={client.phone} onChange={(e) => setClient({ ...client, phone: e.target.value })} className="w-full px-3 py-2 rounded-xl border" />
-            </div>
-            <div>
-              <label className="block text-sm mb-1">الفرع</label>
-              <input value={client.branch} onChange={(e) => setClient({ ...client, branch: e.target.value })} className="w-full px-3 py-2 rounded-xl border" />
-            </div>
-            <div className="md:col-span-3">
-              <label className="block text-sm mb-1">ملاحظات</label>
-              <textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-xl border" placeholder="اكتب أي تعليمات خاصة بالطلبية (اختياري)" />
-            </div>
+          <div className="grid md:grid-cols-3 gap-3 bg-white p-4 rounded-2xl shadow-sm border border-gray-200">
+            <div><label className="block text-sm mb-1">اسم العميل / المؤسسة</label><input value={client.name} onChange={(e) => setClient({ ...client, name: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
+            <div><label className="block text-sm mb-1">رقم الجوال</label><input value={client.phone} onChange={(e) => setClient({ ...client, phone: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
+            <div><label className="block text-sm mb-1">الفرع</label><input value={client.branch} onChange={(e) => setClient({ ...client, branch: e.target.value })} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></div>
+            <div className="md:col-span-3"><label className="block text-sm mb-1">ملاحظات</label><textarea value={notes} onChange={(e) => setNotes(e.target.value)} rows={2} className="w-full px-3 py-2 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" placeholder="اكتب أي تعليمات خاصة بالطلبية (اختياري)" /></div>
           </div>
 
-          {/* Items table */}
-          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h2 className="font-semibold">الأصناف ({filtered.length})</h2>
-              <p className="text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p>
-            </div>
-            <div className="overflow-auto max-h-[60vh]">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr>
-                    <th className="text-right p-2">الكود</th>
-                    <th className="text-right p-2">الاسم</th>
-                    <th className="text-right p-2">الفئة</th>
-                    <th className="text-right p-2">البراند</th>
-                    <th className="text-right p-2">الوحدة</th>
-                    <th className="text-right p-2">الكمية</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filtered.map((it) => {
-                    const key = getKey(it);
-                    const current = cart[key]?.qty || "";
-                    return (
-                      <tr key={getKey(it)} className="border-t">
-                        <td className="p-2 whitespace-nowrap">{it.code}</td>
-                        <td className="p-2">
-                          <div className="flex items-center gap-2">
-                            <span>{it.name}</span>
-                            {it.code && <span className="text-xs text-gray-500">[{it.code}]</span>}
-                          </div>
-                        </td>
-                        <td className="p-2 whitespace-nowrap">{it.category}</td>
-                        <td className="p-2 whitespace-nowrap">{it.brand}</td>
-                        <td className="p-2 whitespace-nowrap">{it.unit}</td>
-                        <td className="p-2 w-[120px]">
-                          <input
-                            type="number"
-                            min={0}
-                            value={current}
-                            onChange={(e) => setQty(it, e.target.value)}
-                            className="w-full px-2 py-1 rounded-lg border focus:outline-none focus:ring"
-                          />
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between"><h2 className="font-semibold">الأصناف ({filtered.length})</h2><p className="text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p></div>
+            <div className="overflow-auto max-h-[60vh]"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr>
+              <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
+            </tr></thead><tbody>
+              {filtered.map((it) => { const key = getKey(it); const current = cart[key]?.qty || ""; return (
+                <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
+              );})}
+            </tbody></table></div>
           </div>
         </section>
 
-        {/* Right: Cart */}
         <aside className="space-y-4">
-          <div className="bg-white rounded-2xl border shadow-sm p-4">
-            <h3 className="font-semibold mb-3">ملخص الطلب</h3>
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-600">عدد الأصناف</span>
-              <span className="font-semibold">{totalLines}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm mb-2">
-              <span className="text-gray-600">إجمالي الكميات</span>
-              <span className="font-semibold">{totalQty}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm mb-4">
-              <span className="text-gray-600">إجمالي المبلغ</span>
-              <span className="font-semibold">{totalAmount}</span>
-            </div>
-
-            <div className="flex gap-2">
-              <button onClick={exportExcel} disabled={!totalLines} className="flex-1 px-3 py-2 rounded-xl bg-green-600 hover:bg-green-700 text-white disabled:opacity-50">
-                تصدير الطلبية إلى Excel
-              </button>
-              <button onClick={() => { setCart({}); setOrderNo(makeOrderNumber()); }} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">
-                مسح
-              </button>
-            </div>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+            <h3 className="font-semibold text-center mb-4">ملخص الطلب</h3>
+            <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">عدد الأصناف</span><span className="font-semibold">{totalLines}</span></div>
+            <div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div>
+            <div className="flex gap-2 mb-2"><button onClick={exportExcel} disabled={!totalLines} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50">تصدير الطلبية إلى Excel</button><button onClick={() => { setCart({}); setOrderNo(makeOrderNumber()); }} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">مسح</button></div>
+            <button onClick={() => { if (!totalLines) return alert("أضف أصنافًا للطلب أولًا"); window.open("https://wa.me/?text=" + encodeURIComponent(whatsappText), "_blank", "noopener,noreferrer"); }} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white">مشاركة عبر واتساب</button>
+            <p className="text-xs text-gray-500 mt-2 text-center">ستفتح رسالة الطلب في واتساب لمراجعتها وإرسالها.</p>
           </div>
 
-          <div className="bg-white rounded-2xl border shadow-sm overflow-hidden">
-            <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h4 className="font-semibold">الأصناف المختارة</h4>
-              <span className="text-xs text-gray-500">يمكن تعديل الكميات من الجدول</span>
-            </div>
-            <div className="max-h-[40vh] overflow-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 sticky top-0 z-10">
-                  <tr>
-                    <th className="text-right p-2">الكود</th>
-                    <th className="text-right p-2">الصنف</th>
-                    <th className="text-right p-2">البراند</th>
-                    <th className="text-right p-2">الوحدة</th>
-                    <th className="text-right p-2">الكمية</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {Object.values(cart).length === 0 && (
-                    <tr>
-                      <td className="p-4 text-center text-gray-500" colSpan={5}>لا توجد أصناف مختارة حتى الآن</td>
-                    </tr>
-                  )}
-                  {Object.values(cart).map((x, idx) => (
-                    <tr key={idx} className="border-t">
-                      <td className="p-2 whitespace-nowrap">{x.code}</td>
-                      <td className="p-2">{x.name}</td>
-                      <td className="p-2 whitespace-nowrap">{x.brand}</td>
-                      <td className="p-2 whitespace-nowrap">{x.unit}</td>
-                      <td className="p-2 whitespace-nowrap">{x.qty}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          <div className="text-xs text-gray-500">
-            <p>نصيحة: ارفع قائمة الأصناف من ملف Excel (عمود واحد على الأقل للاسم، ويفضل الكود/الوحدة/الفئة). بعد الاختيار، انقر "تصدير الطلبية إلى Excel" لتحصل على ملخص الطلب جاهز للإرسال.</p>
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+            <div className="px-4 py-3 border-b border-gray-200"><h4 className="font-semibold">الأصناف المختارة</h4><span className="text-xs text-gray-500">يمكن تعديل الكميات من الجدول</span></div>
+            <div className="max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
+              {Object.values(cart).length === 0 && <tr><td className="p-4 text-center text-gray-500" colSpan={4}>لا توجد أصناف مختارة حتى الآن</td></tr>}
+              {Object.values(cart).map((x, idx) => <tr key={idx} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{x.qty}</td><td className="p-2 whitespace-nowrap">{x.unit}</td><td className="p-2">{x.name}</td><td className="p-2 whitespace-nowrap">{x.code}</td></tr>)}
+            </tbody></table></div>
           </div>
         </aside>
       </main>
@@ -524,5 +426,4 @@ export default function App(){
     </ErrorBoundary>
   );
 }
-
 
