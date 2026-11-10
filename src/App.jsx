@@ -356,10 +356,10 @@ function MainApp() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-3 sm:px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-1"><h2 className="font-semibold">الأصناف ({filtered.length})</h2><p className="text-xs sm:text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p></div>
             <div className="hidden md:block overflow-auto max-h-[60vh]"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr>
-              <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
+              <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">البراند</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
             </tr></thead><tbody>
               {filtered.map((it) => { const key = getKey(it); const current = cart[key]?.qty || ""; return (
-                <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
+                <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.brand || "—"}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
               );})}
             </tbody></table></div>
 
@@ -374,7 +374,7 @@ function MainApp() {
                         <p className="text-xs text-gray-500" dir="ltr">{it.code}</p>
                         <p className="font-medium leading-6 break-words">{it.name}</p>
                       </div>
-                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">{it.category}</span>
+                      <div className="flex shrink-0 flex-col items-end gap-1"><span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">الفئة: {it.category}</span><span className="rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-700">البراند: {it.brand || "—"}</span></div>
                     </div>
                     <div className="flex items-end justify-between gap-3">
                       <p className="text-sm text-gray-600">الوحدة: {it.unit || "—"}</p>
