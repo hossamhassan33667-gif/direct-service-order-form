@@ -180,6 +180,7 @@ function MainApp() {
 
   // --- Export to Excel ---
   const exportExcel = async () => {
+    if (!client.name.trim()) return alert("يرجى تعبئة اسم العميل / المؤسسة أولاً");
     try {
       if (!Object.keys(cart).length) return alert("لا توجد بيانات للتصدير");
       const XLSXmod = await import("xlsx");
@@ -376,7 +377,7 @@ function MainApp() {
             <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">عدد الأصناف</span><span className="font-semibold">{totalLines}</span></div>
             <div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div>
             <div className="flex gap-2 mb-2"><button onClick={exportExcel} disabled={!totalLines} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50">تصدير الطلبية إلى Excel</button><button onClick={() => { setCart({}); setOrderNo(makeOrderNumber()); }} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">مسح</button></div>
-            <button onClick={() => { if (!totalLines) return alert("أضف أصنافًا للطلب أولًا"); window.open("https://wa.me/?text=" + encodeURIComponent(whatsappText), "_blank", "noopener,noreferrer"); }} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white">مشاركة عبر واتساب</button>
+            <button onClick={() => { if (!client.name.trim()) return alert("يرجى تعبئة اسم العميل / المؤسسة أولاً"); if (!totalLines) return alert("أضف أصنافًا للطلب أولًا"); window.open("https://wa.me/?text=" + encodeURIComponent(whatsappText), "_blank", "noopener,noreferrer"); }} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white">مشاركة عبر واتساب</button>
             <p className="text-xs text-gray-500 mt-2 text-center">ستفتح رسالة الطلب في واتساب لمراجعتها وإرسالها.</p>
           </div>
 
@@ -426,4 +427,3 @@ export default function App(){
     </ErrorBoundary>
   );
 }
-
