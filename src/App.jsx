@@ -257,7 +257,10 @@ function MainApp() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `${orderNo}.xlsx`;
+      const filenameParts = [client.name, client.phone, client.branch, orderNo, todayISO()]
+        .filter((part) => String(part || "").trim())
+        .map((part) => String(part).trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-").replace(/[. ]+$/g, ""));
+      a.download = `${filenameParts.join(" - ")}.xlsx`;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
