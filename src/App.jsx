@@ -192,7 +192,7 @@ function MainApp() {
   const totalAmount = Object.values(cart).reduce((a, c) => a + (Number(c.price || 0) * Number(c.qty || 0)), 0);
 
   // --- Export to Excel ---
-  const exportExcel = async () => {
+  const exportExcel = async (shareViaWhatsApp = false) => {
     if (!client.name.trim()) return alert("يرجى تعبئة اسم العميل / المؤسسة أولاً");
     try {
       if (!Object.keys(cart).length) return alert("لا توجد بيانات للتصدير");
@@ -267,16 +267,30 @@ function MainApp() {
 
       const wbout = XLSX.write(wb, { bookType: "xlsx", type: "array" });
       const blob = new Blob([wbout], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
       const filenameParts = [client.name, client.phone, client.branch, orderNo, todayISO()]
         .filter((part) => String(part || "").trim())
         .map((part) => String(part).trim().replace(/[<>:"/\\|?*\u0000-\u001F]/g, "-").replace(/[. ]+$/g, ""));
-      a.download = `${filenameParts.join(" - ")}.xlsx`;
+      const fileName = `${filenameParts.join(" - ")}.xlsx`;
+      const file = new File([blob], fileName, { type: blob.type });
+
+      if (shareViaWhatsApp && typeof navigator.share === "function" && navigator.canShare?.({ files: [file] })) {
+        try {
+          await navigator.share({ files: [file], title: `طلب بضائع ${orderNo}` });
+          return;
+        } catch (shareError) {
+          if (shareError?.name === "AbortError") return;
+          console.error(shareError);
+        }
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = fileName;
       document.body.appendChild(a);
       a.click();
       setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 0);
+      if (shareViaWhatsApp) alert("متصفحك لا يدعم مشاركة ملف Excel مباشرةً. تم تنزيل الملف؛ أرفقه يدويًا في محادثة واتساب.");
     } catch (ex) {
       console.error(ex);
       alert("تعذّر إنشاء ملف Excel – تأكد من عدم حظر المتصفح للتنزيلات المنبثقة.");
@@ -423,8 +437,8 @@ function MainApp() {
             <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">عدد الأصناف</span><span className="font-semibold">{totalLines}</span></div>
             <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div><div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي سعر الطلب</span><span className="font-semibold">{formatMoney(totalAmount)}</span></div>
             <div className="flex gap-2 mb-2"><button onClick={exportExcel} disabled={!totalLines} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50">تصدير الطلبية إلى Excel</button><button onClick={() => { setCart({}); setOrderNo(makeOrderNumber()); }} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">مسح</button></div>
-            <button onClick={() => { if (!client.name.trim()) return alert("يرجى تعبئة اسم العميل / المؤسسة أولاً"); if (!totalLines) return alert("أضف أصنافًا للطلب أولًا"); window.open("https://wa.me/?text=" + encodeURIComponent(whatsappText), "_blank", "noopener,noreferrer"); }} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white">مشاركة عبر واتساب</button>
-            <p className="text-xs text-gray-500 mt-2 text-center">ستفتح رسالة الطلب في واتساب لمراجعتها وإرسالها.</p>
+            <button onClick={() => exportExcel(true)} disabled={!totalLines} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white disabled:opacity-50">مشاركة ملف الطلب عبر واتساب</button>
+            <p className="text-xs text-gray-500 mt-2 text-center">إذا تعذرت مشاركة الملف مباشرةً، سيتم تنزيله لإرفاقه يدويًا.</p>
           </div>
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
