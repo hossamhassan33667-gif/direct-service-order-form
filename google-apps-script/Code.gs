@@ -1,6 +1,6 @@
 /** Read-only catalog endpoint for the Direct Service order site.
  * Attach this script to the catalog spreadsheet through Extensions > Apps Script.
- * The web app returns only the five public catalog columns; it never writes to the sheet.
+ * The web app returns the public catalog fields used by the order form; it never writes to the sheet.
  */
 function doGet(e) {
   var callback = e && e.parameter ? String(e.parameter.callback || "") : "";
@@ -25,6 +25,8 @@ function readCatalog_() {
     category: headers.indexOf("category"),
     brand: headers.indexOf("brand"),
     unit: headers.indexOf("unit"),
+    uom: headers.indexOf("uom"),
+    price: headers.indexOf("price"),
   };
 
   return values.slice(1).map(function (row) {
@@ -34,6 +36,8 @@ function readCatalog_() {
       category: cell_(row, indexes.category),
       brand: cell_(row, indexes.brand),
       unit: cell_(row, indexes.unit),
+      uom: cell_(row, indexes.uom),
+      price: cell_(row, indexes.price),
     };
   }).filter(function (item) { return item.code || item.name; });
 }
@@ -49,5 +53,7 @@ function normalizeHeader_(value) {
   if (["category", "الفئة", "التصنيف", "نوع", "group"].indexOf(header) >= 0) return "category";
   if (["brand", "العلامة", "الماركة", "البراند"].indexOf(header) >= 0) return "brand";
   if (["unit", "الوحدة"].indexOf(header) >= 0) return "unit";
+  if (["uom", "unit of measure", "وحدة القياس"].indexOf(header) >= 0) return "uom";
+  if (["price", "السعر", "سعر", "unit price", "price (sar)"].indexOf(header) >= 0) return "price";
   return header;
 }
