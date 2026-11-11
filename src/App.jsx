@@ -24,7 +24,7 @@ const loadGoogleCatalog = (url) => new Promise((resolve, reject) => {
 // --- Utility helpers ---
 const todayISO = () => new Date().toISOString().slice(0, 10);
 const parseAmount = (value) => Number(String(value ?? "").replace(/,/g, "").replace(/[^0-9.-]/g, "")) || 0;
-const formatMoney = (value) => `${parseAmount(value).toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+const formatMoney = (value) => `${parseAmount(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
 
 const makeOrderNumber = () => {
   const d = new Date();
