@@ -431,7 +431,7 @@ function MainApp() {
             <div className="px-4 py-3 border-b border-gray-200"><h4 className="font-semibold">الأصناف المختارة</h4><span className="text-xs text-gray-500">يمكن تعديل الكميات من الجدول</span></div>
             <div className="hidden md:block max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">السعر</th><th className="text-right p-2">الإجمالي</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
               {Object.values(cart).length === 0 && <tr><td className="p-4 text-center text-gray-500" colSpan={6}>لا توجد أصناف مختارة حتى الآن</td></tr>}
-              {Object.values(cart).map((x, idx) => <tr key={idx} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{x.qty}</td><td className="p-2 whitespace-nowrap">{x.unit}</td><td className="p-2 whitespace-nowrap">{formatMoney(x.price)}</td><td className="p-2 whitespace-nowrap">{formatMoney(Number(x.price || 0) * Number(x.qty || 0))}</td><td className="p-2">{x.name}</td><td className="p-2 whitespace-nowrap">{x.code}</td></tr>)}
+              {Object.values(cart).map((x, idx) => <tr key={idx} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap"><input type="number" min={0} step="any" value={x.qty} aria-label={`كمية ${x.name}`} onChange={(e) => { if (e.target.value !== "") setQty(x, e.target.value); }} className="w-20 rounded-lg border border-gray-200 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-200" /></td><td className="p-2 whitespace-nowrap">{x.unit}</td><td className="p-2 whitespace-nowrap">{formatMoney(x.price)}</td><td className="p-2 whitespace-nowrap">{formatMoney(Number(x.price || 0) * Number(x.qty || 0))}</td><td className="p-2">{x.name}</td><td className="p-2 whitespace-nowrap">{x.code}</td></tr>)}
             </tbody></table></div>
             <div className="md:hidden max-h-[40vh] overflow-y-auto divide-y divide-gray-200">
               {Object.values(cart).length === 0 && <p className="p-4 text-center text-sm text-gray-500">لا توجد أصناف مختارة حتى الآن</p>}
@@ -439,7 +439,7 @@ function MainApp() {
                 <div key={idx} className="p-3 space-y-1">
                   <p className="font-medium break-words">{x.name}</p><p className="text-sm text-gray-600">سعر الوحدة: {formatMoney(x.price)} · الإجمالي: {formatMoney(Number(x.price || 0) * Number(x.qty || 0))}</p>
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-gray-600">
-                    <span dir="ltr">{x.code}</span><span>الكمية: {x.qty} {x.unit}</span>
+                    <span dir="ltr">{x.code}</span><label className="flex items-center gap-2">الكمية<input type="number" min={0} step="any" value={x.qty} aria-label={`كمية ${x.name}`} onChange={(e) => { if (e.target.value !== "") setQty(x, e.target.value); }} className="w-24 rounded-lg border border-gray-200 px-2 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-200" /><span>{x.unit}</span></label>
                   </div>
                 </div>
               ))}
