@@ -23,6 +23,9 @@ const loadGoogleCatalog = (url) => new Promise((resolve, reject) => {
 
 // --- Utility helpers ---
 const todayISO = () => new Date().toISOString().slice(0, 10);
+const parseAmount = (value) => Number(String(value ?? "").replace(/,/g, "").replace(/[^0-9.-]/g, "")) || 0;
+const formatMoney = (value) => `${parseAmount(value).toLocaleString("ar-SA", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ر.س`;
+
 const makeOrderNumber = () => {
   const d = new Date();
   const y = d.getFullYear().toString().slice(-2);
@@ -44,6 +47,7 @@ const normalizeHeader = (k) => {
   if (["category", "الفئة", "التصنيف", "نوع", "group"].includes(s)) return "category";
   if (["brand", "العلامة", "الماركة", "البراند"].includes(s)) return "brand";
   if (["price", "السعر", "سعر", "unit price", "price (sar)"].includes(s)) return "price";
+  if (["uom", "unit of measure", "وحدة القياس"].includes(s)) return "uom";
   return s;
 };
 
@@ -55,7 +59,7 @@ const updateCart = (prevCart, item, qtyVal) => {
   if (qty <= 0) delete next[key];
   else next[key] = {
     code: item.code, name: item.name, category: item.category || "", brand: item.brand || "",
-    unit: item.unit, price: item.price || 0, qty,
+    unit: item.unit, uom: item.uom || "", price: item.price || 0, qty,
   };
   return next;
 };
@@ -104,7 +108,8 @@ function MainApp() {
         category: String(row.category ?? "غير مصنف").trim() || "غير مصنف",
         brand: String(row.brand ?? "").trim(),
         unit: String(row.unit ?? "").trim(),
-        price: Number(row.price ?? 0) || 0,
+        uom: String(row.uom ?? "").trim(),
+        price: parseAmount(row.price),
       })).filter((item) => item.code || item.name);
       setItems(mapped);
       setErr("");
@@ -151,10 +156,11 @@ function MainApp() {
         const code = (o.code == null) ? "" : String(o.code).trim();
         const name = (o.name == null) ? "" : String(o.name).trim();
         const unit = (o.unit == null) ? "" : String(o.unit).trim();
+        const uom = (o.uom == null) ? "" : String(o.uom).trim();
         const category = (o.category == null ? "" : String(o.category).trim()) || "غير مصنف";
         const brand = (o.brand == null) ? "" : String(o.brand).trim();
-        const price = Number(o.price ?? 0) || 0;
-        return { code, name, unit, category, brand, price };
+        const price = parseAmount(o.price);
+        return { code, name, unit, uom, category, brand, price };
       });
 
       setItems(mapped.filter((x) => x.code || x.name));
@@ -198,10 +204,13 @@ function MainApp() {
         i + 1,
         x.code,
         x.name,
+        x.uom || "",
         x.category || "",
         x.unit,
         x.brand || "",
         Number(x.qty) || 0,
+        parseAmount(x.price),
+        parseAmount(x.price) * (Number(x.qty) || 0),
       ]);
 
       const header = [
@@ -215,11 +224,12 @@ function MainApp() {
         [],
       ];
 
-      const tableHeader = [["#", "كود الصنف", "اسم الصنف", "الفئة", "الوحدة", "العلامة", "الكمية"]];
+      const tableHeader = [["#", "كود الصنف", "اسم الصنف", "UOM", "الفئة", "الوحدة", "العلامة", "الكمية", "سعر الصنف", "إجمالي الصنف"]];
       const footer = [
         [],
         ["إجمالي الأصناف", cartRows.length],
-        ["إجمالي الكميات", cartRows.reduce((a, r) => a + r[6], 0)],
+        ["إجمالي الكميات", cartRows.reduce((a, r) => a + r[7], 0)],
+        ["إجمالي سعر الطلب", cartRows.reduce((a, r) => a + r[9], 0)],
       ];
 
       const rows = [...header, ...tableHeader, ...cartRows, ...footer];
@@ -230,21 +240,26 @@ function MainApp() {
         { wch: 4 },  // #
         { wch: 14 }, // code
         { wch: 40 }, // name
+        { wch: 14 }, // UOM
         { wch: 16 }, // category
         { wch: 10 }, // unit
         { wch: 14 }, // brand
         { wch: 10 }, // qty
+        { wch: 14 }, // unit price
+        { wch: 16 }, // line total
       ];
 
       // Add AutoFilter on the table range (header row + data rows)
       const startRow = header.length + 1; // table header row index (1-based)
       const endRow = startRow + cartRows.length; // last data row index
-      ws['!autofilter'] = { ref: `A${startRow}:G${endRow}` };
+      ws['!autofilter'] = { ref: `A${startRow}:J${endRow}` };
 
       // Number format for quantity
       for (let r = startRow + 1; r <= endRow; r++) { // data rows only
-        const qtyCell = `G${r}`;
-        if (ws[qtyCell]) ws[qtyCell].t = 'n';
+        for (const col of ["H", "I", "J"]) {
+          const cell = `${col}${r}`;
+          if (ws[cell]) ws[cell].t = "n";
+        }
       }
 
       const wb = XLSX.utils.book_new();
@@ -369,10 +384,10 @@ function MainApp() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-3 sm:px-4 py-3 border-b border-gray-200 flex flex-wrap items-center justify-between gap-1"><h2 className="font-semibold">الأصناف ({filtered.length})</h2><p className="text-xs sm:text-sm text-gray-500">انقر في خانة الكمية لإضافة الصنف</p></div>
             <div className="hidden md:block overflow-auto max-h-[60vh]"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr>
-              <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">البراند</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
+              <th className="text-right p-2">الكود</th><th className="text-right p-2">الاسم</th><th className="text-right p-2">السعر</th><th className="text-right p-2">الفئة</th><th className="text-right p-2">البراند</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الكمية</th>
             </tr></thead><tbody>
               {filtered.map((it) => { const key = getKey(it); const current = cart[key]?.qty || ""; return (
-                <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.brand || "—"}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
+                <tr key={key} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{it.code}</td><td className="p-2">{it.name}</td><td className="p-2 whitespace-nowrap">{formatMoney(it.price)}</td><td className="p-2 whitespace-nowrap">{it.category}</td><td className="p-2 whitespace-nowrap">{it.brand || "—"}</td><td className="p-2 whitespace-nowrap">{it.unit}</td><td className="p-2 w-[120px]"><input type="number" min={0} value={current} onChange={(e) => setQty(it, e.target.value)} className="w-full px-2 py-1 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-200" /></td></tr>
               );})}
             </tbody></table></div>
 
@@ -385,7 +400,7 @@ function MainApp() {
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-xs text-gray-500" dir="ltr">{it.code}</p>
-                        <p className="font-medium leading-6 break-words">{it.name}</p>
+                        <p className="font-medium leading-6 break-words">{it.name}</p><p className="text-sm text-gray-600">السعر: {formatMoney(it.price)}</p>
                       </div>
                       <div className="flex shrink-0 flex-col items-end gap-1"><span className="rounded-full bg-gray-100 px-2 py-1 text-xs text-gray-600">الفئة: {it.category}</span><span className="rounded-full bg-blue-50 px-2 py-1 text-xs text-blue-700">البراند: {it.brand || "—"}</span></div>
                     </div>
@@ -406,7 +421,7 @@ function MainApp() {
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 sm:p-5">
             <h3 className="font-semibold text-center mb-4">ملخص الطلب</h3>
             <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">عدد الأصناف</span><span className="font-semibold">{totalLines}</span></div>
-            <div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div>
+            <div className="flex items-center justify-between text-sm mb-2"><span className="text-gray-600">إجمالي الكميات</span><span className="font-semibold">{totalQty}</span></div><div className="flex items-center justify-between text-sm mb-4"><span className="text-gray-600">إجمالي سعر الطلب</span><span className="font-semibold">{formatMoney(totalAmount)}</span></div>
             <div className="flex gap-2 mb-2"><button onClick={exportExcel} disabled={!totalLines} className="flex-1 px-3 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-50">تصدير الطلبية إلى Excel</button><button onClick={() => { setCart({}); setOrderNo(makeOrderNumber()); }} className="px-3 py-2 rounded-xl bg-gray-100 hover:bg-gray-200">مسح</button></div>
             <button onClick={() => { if (!client.name.trim()) return alert("يرجى تعبئة اسم العميل / المؤسسة أولاً"); if (!totalLines) return alert("أضف أصنافًا للطلب أولًا"); window.open("https://wa.me/?text=" + encodeURIComponent(whatsappText), "_blank", "noopener,noreferrer"); }} className="w-full px-3 py-2 rounded-xl bg-emerald-400 hover:bg-emerald-500 text-white">مشاركة عبر واتساب</button>
             <p className="text-xs text-gray-500 mt-2 text-center">ستفتح رسالة الطلب في واتساب لمراجعتها وإرسالها.</p>
@@ -414,15 +429,15 @@ function MainApp() {
 
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
             <div className="px-4 py-3 border-b border-gray-200"><h4 className="font-semibold">الأصناف المختارة</h4><span className="text-xs text-gray-500">يمكن تعديل الكميات من الجدول</span></div>
-            <div className="hidden md:block max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
-              {Object.values(cart).length === 0 && <tr><td className="p-4 text-center text-gray-500" colSpan={4}>لا توجد أصناف مختارة حتى الآن</td></tr>}
+            <div className="hidden md:block max-h-[40vh] overflow-auto"><table className="w-full text-sm"><thead className="bg-gray-50 sticky top-0 z-10"><tr><th className="text-right p-2">الكمية</th><th className="text-right p-2">الوحدة</th><th className="text-right p-2">السعر</th><th className="text-right p-2">الإجمالي</th><th className="text-right p-2">الصنف</th><th className="text-right p-2">الكود</th></tr></thead><tbody>
+              {Object.values(cart).length === 0 && <tr><td className="p-4 text-center text-gray-500" colSpan={6}>لا توجد أصناف مختارة حتى الآن</td></tr>}
               {Object.values(cart).map((x, idx) => <tr key={idx} className="border-t border-gray-200"><td className="p-2 whitespace-nowrap">{x.qty}</td><td className="p-2 whitespace-nowrap">{x.unit}</td><td className="p-2">{x.name}</td><td className="p-2 whitespace-nowrap">{x.code}</td></tr>)}
             </tbody></table></div>
             <div className="md:hidden max-h-[40vh] overflow-y-auto divide-y divide-gray-200">
               {Object.values(cart).length === 0 && <p className="p-4 text-center text-sm text-gray-500">لا توجد أصناف مختارة حتى الآن</p>}
               {Object.values(cart).map((x, idx) => (
                 <div key={idx} className="p-3 space-y-1">
-                  <p className="font-medium break-words">{x.name}</p>
+                  <p className="font-medium break-words">{x.name}</p><p className="text-sm text-gray-600">سعر الوحدة: {formatMoney(x.price)} · الإجمالي: {formatMoney(Number(x.price || 0) * Number(x.qty || 0))}</p>
                   <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 text-sm text-gray-600">
                     <span dir="ltr">{x.code}</span><span>الكمية: {x.qty} {x.unit}</span>
                   </div>
